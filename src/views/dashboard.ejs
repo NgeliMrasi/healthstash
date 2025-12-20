@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HealthStash Unified Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h1>💳 HealthStash Unified Dashboard</h1>
+
+  <nav>
+    <a class="button" href="#employers">Employers</a>
+    <a class="button secondary" href="#providers">Providers</a>
+    <a class="button" href="#employees">Employees</a>
+    <a class="button secondary" href="#txlog">Transaction Log</a>
+  </nav>
+
+  <section id="employers">
+    <h2>🏢 Employers</h2>
+    <% smes.forEach((sme, i) => { %>
+      <h3><%= sme.name %></h3>
+      <p><small>Wallet: <code><%= sme.wallet %></code></small></p>
+      <a class="button" href="/fund-payroll/<%= i %>">💸 Fund Payroll</a>
+      <table>
+        <thead><tr><th>Employee</th><th>Wallet</th><th>Balance</th></tr></thead>
+        <tbody>
+          <% sme.employees.forEach(emp => { %>
+            <tr>
+              <td><%= emp.name %></td>
+              <td><code><%= emp.wallet %></code></td>
+              <td><%= emp.balance %> <%= assetCode %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% }) %>
+  </section>
+
+  <section id="providers">
+    <h2>🏥 Providers</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Wallet</th><th>Balance</th></tr></thead>
+      <tbody>
+        <% providers.forEach((p, i) => { %>
+          <tr>
+            <td><%= p.name %></td>
+            <td><code><%= p.wallet %></code></td>
+            <td><%= p.balance %> <%= assetCode %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="employees">
+    <h2>👩🏽‍💼 Employees</h2>
+    <table>
+      <thead><tr><th>Name</th><th>SME</th><th>Wallet</th><th>Balance</th><th>Quick Pay</th></tr></thead>
+      <tbody>
+        <% employees.forEach((e, i) => { %>
+          <tr>
+            <td><%= e.name %></td>
+            <td><%= e.sme %></td>
+            <td><code><%= e.wallet %></code></td>
+            <td><%= e.balance %> <%= assetCode %></td>
+            <td>
+              <a class="button" href="/pay-provider/<%= i %>/0/25">Pay Pharmacy 25</a>
+              <a class="button secondary" href="/pay-provider/<%= i %>/1/40">Pay Clinic 40</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="txlog">
+    <h2>📜 Transaction Log</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Time</th>
+          <th>Type</th>
+          <th>Actor</th>
+          <th>Counterparty</th>
+          <th>Amount</th>
+          <th>Hash</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% txlog.forEach((tx, idx) => { %>
+          <tr>
+            <td><%= tx.id || idx + 1 %></td>
+            <td><%= tx.timestamp %></td>
+            <td><%= tx.type %></td>
+            <td><%= tx.actor %></td>
+            <td><%= tx.counterparty %></td>
+            <td><%= tx.amount %></td>
+            <td><a href="https://stellar.expert/explorer/testnet/tx/<%= tx.hash %>" target="_blank"><%= tx.hash %></a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+</body>
+</html>

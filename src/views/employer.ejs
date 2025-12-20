@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Employer Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h1>🏢 Employer Dashboard</h1>
+  <% smes.forEach((sme, i) => { %>
+    <section>
+      <h2><%= sme.name %></h2>
+      <p><small>Wallet: <code><%= sme.wallet %></code></small></p>
+      <a class="button" href="/fund-payroll/<%= i %>">💸 Fund Payroll</a>
+      <table>
+        <thead><tr><th>Employee</th><th>Wallet</th><th>Balance</th></tr></thead>
+        <tbody>
+          <% sme.employees.forEach(emp => { %>
+            <tr>
+              <td><%= emp.name %></td>
+              <td><code><%= emp.wallet %></code></td>
+              <td><%= emp.balance %> <%= assetCode %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  <% }) %>
+</body>
+</html>

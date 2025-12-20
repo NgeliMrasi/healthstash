@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Provider Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h1>🏥 Provider Dashboard</h1>
+  <table>
+    <thead><tr><th>Provider</th><th>Wallet</th><th>Balance</th></tr></thead>
+    <tbody>
+      <% providers.forEach((p, i) => { %>
+        <tr>
+          <td><%= p.name %></td>
+          <td><code><%= p.wallet %></code></td>
+          <td><%= p.balance %> <%= assetCode %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <p><a class="link" href="/employer">Back to Employer</a> | <a class="link" href="/employees">View Employees</a></p>
+</body>
+</html>

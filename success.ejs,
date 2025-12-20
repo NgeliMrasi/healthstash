@@ -1,0 +1,11 @@
+<!-- success.ejs -->
+<!DOCTYPE html>
+<html>
+<head><title>Transaction Success</title><link rel="stylesheet" href="/styles.css"></head>
+<body>
+  <h1>✅ Transaction Successful</h1>
+  <p>Hash: <code><%= txHash %></code></p>
+  <p><a href="<%= explorerUrl %>" target="_blank">View on Stellar Expert</a></p>
+  <p><a class="link" href="/employer">Employer</a> | <a class="link" href="/provider">Providers</a> | <a class="link" href="/employees">Employees</a></p>
+</body>
+</html>

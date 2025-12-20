@@ -1,0 +1,10 @@
+<!-- error.ejs -->
+<!DOCTYPE html>
+<html>
+<head><title>Error</title><link rel="stylesheet" href="/styles.css"></head>
+<body>
+  <h1>❌ Transaction Failed</h1>
+  <p><%= message %></p>
+  <p><a class="link" href="/employer">Employer</a> | <a class="link" href="/provider">Providers</a> | <a class="link" href="/employees">Employees</a></p>
+</body>
+</html>
