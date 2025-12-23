@@ -1,21 +1,22 @@
 {
   "name": "healthstash",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "HealthStash demo app running on Express + Stellar Testnet",
+  "main": "src/app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "vercel-build": "npm install"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
+    "express": "^4.18.2",
     "dotenv": "^17.2.3",
-    "ejs": "^3.1.10",
-    "express": "^5.2.1",
-    "node-fetch": "^3.3.2",
-    "sql.js": "^1.13.0",
-    "stellar-sdk": "^13.3.0"
+    "stellar-sdk": "^10.4.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
