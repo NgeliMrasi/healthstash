@@ -9,12 +9,12 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Health check route
+// Health check
 app.get('/', (_req, res) => {
   res.json({ status: 'HealthStash API running' });
 });
 
-// Demo account route
+// Create demo account
 app.get('/stellar/demo-account', async (_req, res) => {
   try {
     const account = await createDemoAccount();
@@ -25,15 +25,13 @@ app.get('/stellar/demo-account', async (_req, res) => {
   }
 });
 
-// Issue asset route
+// Issue custom asset
 app.post('/stellar/issue-asset', async (req, res) => {
+  const { issuerSecret, assetCode, amount, destinationPublicKey } = req.body;
+  if (!issuerSecret || !issuerSecret.startsWith('S')) {
+    return res.status(400).json({ error: 'Invalid issuerSecret: must start with S' });
+  }
   try {
-    const { issuerSecret, assetCode, amount, destinationPublicKey } = req.body;
-
-    if (!issuerSecret || !issuerSecret.startsWith('S')) {
-      return res.status(400).json({ error: 'Invalid issuerSecret: must be a valid Stellar secret key starting with S' });
-    }
-
     const result = await issueAsset(issuerSecret, assetCode, amount, destinationPublicKey);
     res.json({ success: true, result });
   } catch (err) {
@@ -42,28 +40,27 @@ app.post('/stellar/issue-asset', async (req, res) => {
   }
 });
 
-// **New combined route**: create demo account + issue token
+// Demo account + token issuance
 app.post('/stellar/demo-account-with-token', async (req, res) => {
+  const { assetCode, amount } = req.body;
+  const issuerSecret = process.env.ISSUER_SECRET;
+
+  if (!issuerSecret || !issuerSecret.startsWith('S')) {
+    return res.status(500).json({ error: 'ISSUER_SECRET not set or invalid in environment' });
+  }
+
   try {
-    const { assetCode, amount } = req.body;
+    // Create demo account
+    const account = await createDemoAccount();
 
-    if (!assetCode || !amount) {
-      return res.status(400).json({ error: 'assetCode and amount are required' });
-    }
-
-    // 1️⃣ Create a demo account
-    const demoAccount = await createDemoAccount();
-
-    // 2️⃣ Issue asset to the demo account using demo account itself as issuer
-    const assetResult = await issueAsset(demoAccount.secretKey, assetCode, amount, demoAccount.publicKey);
+    // Issue token to the new account
+    const issueResult = await issueAsset(issuerSecret, assetCode, amount, account.publicKey);
 
     res.json({
-      demoAccount,
-      issuedAsset: {
-        assetCode,
-        amount,
-        result: assetResult,
-      },
+      success: true,
+      account,
+      issuedAsset: { assetCode, amount },
+      transaction: issueResult
     });
   } catch (err) {
     console.error('Error in /stellar/demo-account-with-token:', err);
