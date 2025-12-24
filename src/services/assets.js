@@ -1,9 +1,16 @@
 // src/services/assets.js
 
 require('dotenv').config();
-const { Horizon, Keypair, Asset, Operation, TransactionBuilder, Networks } = require('@stellar/stellar-sdk');
+const {
+  Horizon,
+  Keypair,
+  Asset,
+  Operation,
+  TransactionBuilder,
+  Networks,
+} = require('@stellar/stellar-sdk');
 
-// Horizon server instance (Testnet by default, configurable via .env)
+// Horizon server instance (Testnet by default)
 const server = new Horizon.Server(
   process.env.HORIZON_URL || 'https://horizon-testnet.stellar.org'
 );
@@ -20,8 +27,11 @@ async function createDemoAccount() {
 
   const response = await fetch(friendbotUrl);
   if (!response.ok) {
-    throw new Error(`Friendbot failed: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Friendbot failed: ${response.status} ${response.statusText}`
+    );
   }
+
   await response.json();
 
   const account = await server.loadAccount(keypair.publicKey());
@@ -36,11 +46,17 @@ async function createDemoAccount() {
 /**
  * Issue a custom asset (token) on testnet
  */
-async function issueAsset(issuerSecret, assetCode, amount, destinationPublicKey) {
+async function issueAsset(
+  issuerSecret,
+  assetCode,
+  amount,
+  destinationPublicKey
+) {
   const issuerKeypair = Keypair.fromSecret(issuerSecret);
   const asset = new Asset(assetCode, issuerKeypair.publicKey());
 
   const account = await server.loadAccount(issuerKeypair.publicKey());
+
   const transaction = new TransactionBuilder(account, {
     fee: await server.fetchBaseFee(),
     networkPassphrase: Networks.TESTNET,

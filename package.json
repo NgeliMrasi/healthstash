@@ -1,23 +1,18 @@
 {
   "name": "healthstash",
   "version": "1.0.0",
-  "description": "HealthStash demo app running on Express + Stellar Testnet",
+  "description": "HealthStash backend services",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js",
-    "vercel-build": "npm install"
+    "dev": "nodemon src/app.js"
   },
   "dependencies": {
-    "@stellar/stellar-sdk": "^14.4.3",
+    "@stellar/stellar-sdk": "^13.3.0",
     "dotenv": "^17.2.3",
-    "express": "^4.18.2",
-    "node-fetch": "^3.3.2"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
+    "express": "^4.18.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": "22.x"
   }
 }
