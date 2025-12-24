@@ -1,27 +1,65 @@
-const StellarSdk = require('stellar-sdk');
-const { Keypair, Asset, Operation, TransactionBuilder, Networks, BASE_FEE } = StellarSdk;
-const server = new StellarSdk.Horizon.Server(process.env.HORIZON_URL);
+// src/services/assets.js
 
-async function ensureTrustline(holderPub, holderSec, code, issuerPub) {
-  const acct = await server.loadAccount(holderPub);
-  const a = new Asset(code, issuerPub);
-  const tx = new TransactionBuilder(acct, { fee: BASE_FEE, networkPassphrase: Networks.TESTNET })
-    .addOperation(Operation.changeTrust({ asset: a }))
-    .setTimeout(30).build();
-  tx.sign(Keypair.fromSecret(holderSec));
-  return server.submitTransaction(tx);
+require('dotenv').config();
+const { Horizon, Keypair, Asset, Operation, TransactionBuilder, Networks } = require('@stellar/stellar-sdk');
+
+// Horizon server instance (Testnet by default, configurable via .env)
+const server = new Horizon.Server(
+  process.env.HORIZON_URL || 'https://horizon-testnet.stellar.org'
+);
+
+/**
+ * Create a new funded testnet account using Friendbot
+ */
+async function createDemoAccount() {
+  const keypair = Keypair.random();
+
+  const friendbotUrl = `https://friendbot.stellar.org?addr=${encodeURIComponent(
+    keypair.publicKey()
+  )}`;
+
+  const response = await fetch(friendbotUrl);
+  if (!response.ok) {
+    throw new Error(`Friendbot failed: ${response.status} ${response.statusText}`);
+  }
+  await response.json();
+
+  const account = await server.loadAccount(keypair.publicKey());
+
+  return {
+    publicKey: keypair.publicKey(),
+    secretKey: keypair.secret(),
+    balances: account.balances,
+  };
 }
 
-async function payment(senderPub, senderSec, destPub, code, issuerPub, amount, memoText) {
-  const senderAcct = await server.loadAccount(senderPub);
-  const a = new Asset(code, issuerPub);
-  const txBuilder = new TransactionBuilder(senderAcct, { fee: BASE_FEE, networkPassphrase: Networks.TESTNET })
-    .addOperation(Operation.payment({ destination: destPub, asset: a, amount: String(amount) }))
-    .setTimeout(30);
-  if (memoText) txBuilder.addMemo(StellarSdk.Memo.text(memoText));
-  const tx = txBuilder.build();
-  tx.sign(Keypair.fromSecret(senderSec));
-  return server.submitTransaction(tx);
+/**
+ * Issue a custom asset (token) on testnet
+ */
+async function issueAsset(issuerSecret, assetCode, amount, destinationPublicKey) {
+  const issuerKeypair = Keypair.fromSecret(issuerSecret);
+  const asset = new Asset(assetCode, issuerKeypair.publicKey());
+
+  const account = await server.loadAccount(issuerKeypair.publicKey());
+  const transaction = new TransactionBuilder(account, {
+    fee: await server.fetchBaseFee(),
+    networkPassphrase: Networks.TESTNET,
+  })
+    .addOperation(
+      Operation.payment({
+        destination: destinationPublicKey,
+        asset,
+        amount: amount.toString(),
+      })
+    )
+    .setTimeout(30)
+    .build();
+
+  transaction.sign(issuerKeypair);
+  return server.submitTransaction(transaction);
 }
 
-module.exports = { ensureTrustline, payment };
+module.exports = {
+  createDemoAccount,
+  issueAsset,
+};
