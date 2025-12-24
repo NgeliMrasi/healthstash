@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 2,
   "builds": [
     {
       "src": "src/app.js",
@@ -8,11 +8,28 @@
   ],
   "routes": [
     {
+      "src": "/stellar/demo-account",
+      "methods": ["GET"],
+      "dest": "src/app.js"
+    },
+    {
+      "src": "/stellar/issue-asset",
+      "methods": ["POST"],
+      "dest": "src/app.js"
+    },
+    {
+      "src": "/stellar/demo-account-with-token",
+      "methods": ["POST"],
+      "dest": "src/app.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "src/app.js"
     }
   ],
   "env": {
-    "HORIZON_URL": "https://horizon-testnet.stellar.org"
+    "ISSUER_SECRET": "YOUR_STELLAR_SECRET_STARTING_WITH_S",
+    "HORIZON_URL": "https://horizon-testnet.stellar.org",
+    "PORT": "3000"
   }
 }
