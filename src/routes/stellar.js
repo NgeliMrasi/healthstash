@@ -2,53 +2,73 @@
 
 const express = require('express');
 const router = express.Router();
-const {
-  getAccountBalances,
-  createAccount,
-  sendPayment,
-  trustAsset
-} = require('../services/stellar');
+const { createDemoAccount, issueAsset } = require('../services/assets');
+const { Horizon } = require('@stellar/stellar-sdk');
 
-// GET balances for an account
-router.get('/balances/:accountId', async (req, res) => {
+// Horizon server instance (Testnet by default)
+const server = new Horizon.Server(
+  process.env.HORIZON_URL || 'https://horizon-testnet.stellar.org'
+);
+
+// Demo account route
+router.get('/demo-account', async (_req, res) => {
   try {
-    const balances = await getAccountBalances(req.params.accountId);
-    res.json({ accountId: req.params.accountId, balances });
+    const account = await createDemoAccount();
+    res.json(account);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to load balances', details: err.message });
+    console.error('Error in /stellar/demo-account:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// POST create a new account (testnet Friendbot)
-router.post('/create', async (req, res) => {
+// Issue asset route
+router.post('/issue-asset', async (req, res) => {
   try {
-    const { secretKey } = req.body;
-    const result = await createAccount(secretKey);
-    res.json({ message: 'Account created', result });
+    const { issuerSecret, assetCode, amount, destinationPublicKey } = req.body;
+
+    if (!issuerSecret || !assetCode || !amount || !destinationPublicKey) {
+      return res.status(400).json({
+        error: 'Missing required fields: issuerSecret, assetCode, amount, destinationPublicKey',
+      });
+    }
+
+    const result = await issueAsset(issuerSecret, assetCode, amount, destinationPublicKey);
+    res.json({ status: 'Asset issued successfully', result });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to create account', details: err.message });
+    console.error('Error in /stellar/issue-asset:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// POST send a payment
-router.post('/pay', async (req, res) => {
+// Transaction history route
+router.get('/history/:publicKey', async (req, res) => {
   try {
-    const { sourceSecret, destinationPublic, amount, asset } = req.body;
-    const result = await sendPayment(sourceSecret, destinationPublic, amount, asset);
-    res.json({ message: 'Payment sent', result });
-  } catch (err) {
-    res.status(500).json({ error: 'Payment failed', details: err.message });
-  }
-});
+    const { publicKey } = req.params;
+    if (!publicKey) {
+      return res.status(400).json({ error: 'Missing publicKey parameter' });
+    }
 
-// POST add a trustline
-router.post('/trust', async (req, res) => {
-  try {
-    const { secretKey, assetCode, issuer } = req.body;
-    const result = await trustAsset(secretKey, assetCode, issuer);
-    res.json({ message: 'Trustline added', result });
+    const account = await server.loadAccount(publicKey);
+    const transactions = await server.transactions()
+      .forAccount(publicKey)
+      .order('desc')
+      .limit(10)
+      .call();
+
+    res.json({
+      publicKey,
+      balances: account.balances,
+      recentTransactions: transactions.records.map(tx => ({
+        id: tx.id,
+        created_at: tx.created_at,
+        source_account: tx.source_account,
+        operation_count: tx.operation_count,
+        successful: tx.successful,
+      })),
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Trustline failed', details: err.message });
+    console.error('Error in /stellar/history:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 

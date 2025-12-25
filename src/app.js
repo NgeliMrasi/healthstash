@@ -3,18 +3,24 @@
 require('dotenv').config();
 const express = require('express');
 const { createDemoAccount, issueAsset } = require('./services/assets');
+const { Horizon } = require('@stellar/stellar-sdk');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Horizon server instance (Testnet by default)
+const server = new Horizon.Server(
+  process.env.HORIZON_URL || 'https://horizon-testnet.stellar.org'
+);
+
 app.use(express.json());
 
-// Health check
+// Health check route
 app.get('/', (_req, res) => {
   res.json({ status: 'HealthStash API running' });
 });
 
-// Create demo account
+// Demo account route
 app.get('/stellar/demo-account', async (_req, res) => {
   try {
     const account = await createDemoAccount();
@@ -25,50 +31,57 @@ app.get('/stellar/demo-account', async (_req, res) => {
   }
 });
 
-// Issue custom asset
+// Issue asset route
 app.post('/stellar/issue-asset', async (req, res) => {
-  const { issuerSecret, assetCode, amount, destinationPublicKey } = req.body;
-  if (!issuerSecret || !issuerSecret.startsWith('S')) {
-    return res.status(400).json({ error: 'Invalid issuerSecret: must start with S' });
-  }
   try {
+    const { issuerSecret, assetCode, amount, destinationPublicKey } = req.body;
+
+    if (!issuerSecret || !assetCode || !amount || !destinationPublicKey) {
+      return res.status(400).json({
+        error: 'Missing required fields: issuerSecret, assetCode, amount, destinationPublicKey',
+      });
+    }
+
     const result = await issueAsset(issuerSecret, assetCode, amount, destinationPublicKey);
-    res.json({ success: true, result });
+    res.json({ status: 'Asset issued successfully', result });
   } catch (err) {
     console.error('Error in /stellar/issue-asset:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Demo account + token issuance
-app.post('/stellar/demo-account-with-token', async (req, res) => {
-  const { assetCode, amount } = req.body;
-  const issuerSecret = process.env.ISSUER_SECRET;
-
-  if (!issuerSecret || !issuerSecret.startsWith('S')) {
-    return res.status(500).json({ error: 'ISSUER_SECRET not set or invalid in environment' });
-  }
-
+// Transaction history route
+app.get('/stellar/history/:publicKey', async (req, res) => {
   try {
-    // Create demo account
-    const account = await createDemoAccount();
+    const { publicKey } = req.params;
+    if (!publicKey) {
+      return res.status(400).json({ error: 'Missing publicKey parameter' });
+    }
 
-    // Issue token to the new account
-    const issueResult = await issueAsset(issuerSecret, assetCode, amount, account.publicKey);
+    const account = await server.loadAccount(publicKey);
+    const transactions = await server.transactions()
+      .forAccount(publicKey)
+      .order('desc')
+      .limit(10)
+      .call();
 
     res.json({
-      success: true,
-      account,
-      issuedAsset: { assetCode, amount },
-      transaction: issueResult
+      publicKey,
+      balances: account.balances,
+      recentTransactions: transactions.records.map(tx => ({
+        id: tx.id,
+        created_at: tx.created_at,
+        source_account: tx.source_account,
+        operation_count: tx.operation_count,
+        successful: tx.successful,
+      })),
     });
   } catch (err) {
-    console.error('Error in /stellar/demo-account-with-token:', err);
+    console.error('Error in /stellar/history:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`HealthStash API listening on port ${PORT}`);
 });

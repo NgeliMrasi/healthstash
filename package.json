@@ -1,18 +1,14 @@
 {
   "name": "healthstash",
   "version": "1.0.0",
-  "description": "HealthStash backend services",
+  "description": "HealthStash API demo",
   "main": "src/app.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "start": "node src/app.js"
   },
   "dependencies": {
-    "@stellar/stellar-sdk": "^13.3.0",
-    "dotenv": "^17.2.3",
-    "express": "^4.18.2"
-  },
-  "engines": {
-    "node": "22.x"
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "@stellar/stellar-sdk": "^13.3.0"
   }
 }
